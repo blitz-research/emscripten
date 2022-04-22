@@ -184,16 +184,18 @@ var WasmFSLibrary = {
     return wasmFS$backends[backend].freeFile(file);
   },
 
+  _wasmfs_jsimpl_write__deps: i53ConversionDeps,
   _wasmfs_jsimpl_write: function(backend, file, buffer, length, {{{ defineI64Param('offset') }}}) {
-    {{{ receiveI64ParamAsDouble('offset') }}}
+    {{{ receiveI64ParamAsI53('offset', cDefine('EOVERFLOW')) }}}
 #if ASSERTIONS
     assert(wasmFS$backends[backend]);
 #endif
     return wasmFS$backends[backend].write(file, buffer, length, offset);
   },
 
+  _wasmfs_jsimpl_read__deps: i53ConversionDeps,
   _wasmfs_jsimpl_read: function(backend, file, buffer, length, {{{ defineI64Param('offset') }}}) {
-    {{{ receiveI64ParamAsDouble('offset') }}}
+    {{{ receiveI64ParamAsI53('offset', cDefine('EOVERFLOW')) }}}
 #if ASSERTIONS
     assert(wasmFS$backends[backend]);
 #endif
@@ -241,9 +243,13 @@ var WasmFSLibrary = {
     {{{ makeDynCall('vi', 'fptr') }}}(arg);
   },
 
-  _wasmfs_jsimpl_async_write__deps: ['$runtimeKeepalivePush', '$runtimeKeepalivePop'],
+  _wasmfs_jsimpl_async_write__deps: [
+#if !MINIMAL_RUNTIME
+    '$runtimeKeepalivePush', '$runtimeKeepalivePop',
+#endif
+  ].concat(i53ConversionDeps),
   _wasmfs_jsimpl_async_write: async function(backend, file, buffer, length, {{{ defineI64Param('offset') }}}, fptr, arg) {
-    {{{ receiveI64ParamAsDouble('offset') }}}
+    {{{ receiveI64ParamAsI53('offset', cDefine('EOVERFLOW')) }}}
 #if ASSERTIONS
     assert(wasmFS$backends[backend]);
 #endif
@@ -255,9 +261,13 @@ var WasmFSLibrary = {
     {{{ makeDynCall('vi', 'fptr') }}}(arg);
   },
 
-  _wasmfs_jsimpl_async_read__deps: ['$runtimeKeepalivePush', '$runtimeKeepalivePop'],
+  _wasmfs_jsimpl_async_read__deps: [
+#if !MINIMAL_RUNTIME
+    '$runtimeKeepalivePush', '$runtimeKeepalivePop',
+#endif
+  ].concat(i53ConversionDeps),
   _wasmfs_jsimpl_async_read: async function(backend, file, buffer, length, {{{ defineI64Param('offset') }}}, fptr, arg) {
-    {{{ receiveI64ParamAsDouble('offset') }}}
+    {{{ receiveI64ParamAsI53('offset', cDefine('EOVERFLOW')) }}}
 #if ASSERTIONS
     assert(wasmFS$backends[backend]);
 #endif

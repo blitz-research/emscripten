@@ -93,9 +93,8 @@ mergeInto(LibraryManager.library, {
     return HEAPU32[ptr>>2] + HEAPU32[ptr+4>>2] * 4294967296;
   },
 
-  // Converts the given signed 32-bit low-high pair to a JavaScript Number that can
-  // represent 53 bits of precision.
-  // TODO: Add $convertI32PairToI53Signaling() variant.
+  // Converts the given signed 32-bit low-high pair to a JavaScript Number that
+  // can represent 53 bits of precision.
   $convertI32PairToI53: function(lo, hi) {
 #if ASSERTIONS
     // This function should not be getting called with too large unsigned numbers
@@ -108,8 +107,37 @@ mergeInto(LibraryManager.library, {
 
   // Converts the given unsigned 32-bit low-high pair to a JavaScript Number that can
   // represent 53 bits of precision.
-  // TODO: Add $convertU32PairToI53Signaling() variant.
+  // TODO: Add $convertU32PairToI53Checked() variant.
   $convertU32PairToI53: function(lo, hi) {
     return (lo >>> 0) + (hi >>> 0) * 4294967296;
-  }
+  },
+
+  // Same as convertI32PairToI53 but returns NaN if the pair of I32 numbers
+  // combine to form a number outside the i53 range
+  // (MIN_SAFE_INTEGER - MAX_SAFE_INTEGER)
+  $convertI32PairToI53Checked__deps: ['$convertI32PairToI53'],
+  $convertI32PairToI53Checked: function(lo, hi) {
+    if (hi > 0x1fffff) {
+      return NaN;
+    } else if (hi < 0) {
+      let combined = (hi * 4294967296) - (~(lo >>> 0) + 1);
+      if (combined < Number.MIN_SAFE_INTEGER) {
+        return NaN;
+      }
+    }
+    return convertI32PairToI53(lo, hi);
+  },
+
+  $bigintToI53Checked: function(num) {
+    if (num < Number.MIN_SAFE_INTEGER || num > Number.MAX_SAFE_INTEGER) {
+      return NaN;
+    }
+    return Number(num);
+  },
 });
+
+#if WASM_BIGINT
+global.i53ConversionDeps = ['$bigintToI53Checked'];
+#else
+global.i53ConversionDeps = ['$convertI32PairToI53Checked'];
+#endif
